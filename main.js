@@ -14,7 +14,6 @@ function getIpAddress() {
         const match = stdout.match(ipPattern);
         if (!error && match) {
           const ipAddress = match[0];
-          // console.log("Retrieved IP", ipAddress);
           IP = ipAddress;
           resolve(ipAddress);
         } else {
@@ -95,7 +94,6 @@ function checkGPU() {
 
 // Function to send the IP address as a POST request
 async function sendIpAddress(ipAddress) {
-  // console.log(ipAddress);
   const ipObj = { ip: ipAddress };
   console.log(ipObj);
 
@@ -130,25 +128,16 @@ async function main() {
     const ipAddress = await getIpAddress();
     if (ipAddress) {
       const dockerResult = await checkDocker();
-      // console.log(dockerResult, "Docker is running");
       if (dockerResult) {
         const portCheckResult1 = await checkPorts(8081);
-        // console.log(portCheckResult1,"good");
         const portCheckResult2 = await checkPorts(8082);
 
         if (portCheckResult1.success && portCheckResult2.success) {
-          // console.log("Ports 8081 and 8082 are running fine");
 
           const gpuResult = await checkGPU();
           if (gpuResult.success) {
-            // console.log("GPU is working fine", gpuResult);
             const onPremPing = await sendIpAddress(ipAddress);
-            // if (onPremPing) {
-            //   const time = new Date().toLocaleString();
-            //   console.log(onPremPing, time);
-            // } else {
-            //   console.log("Ping not sent");
-            // }
+          
           } else {
             console.log("GPU is not working fine", gpuResult);
           }
