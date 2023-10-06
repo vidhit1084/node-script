@@ -1,20 +1,22 @@
 const { exec } = require("child_process");
 
-const axios = require('axios')
+const axios = require("axios");
 const execOptions = { windowsHide: true };
 
-
+let IP;
 // Function to retrieve the IP address
 function getIpAddress() {
   return new Promise((resolve, reject) => {
     exec(
-      'start /B netsh interface ip show address "Ethernet" | findstr "IP Address"', execOptions,
+      'start /B netsh interface ip show address "Ethernet" | findstr "IP Address"',
+      execOptions,
       (error, stdout) => {
         const ipPattern = /\d+\.\d+\.\d+\.\d+/;
         const match = stdout.match(ipPattern);
         if (!error && match) {
           const ipAddress = match[0];
           // console.log("Retrieved IP", ipAddress);
+          IP = ipAddress;
           resolve(ipAddress);
         } else {
           console.error("No IP found here.");
@@ -28,28 +30,36 @@ function getIpAddress() {
 // Function to check if Docker is running
 function checkDocker() {
   return new Promise((resolve, reject) => {
-    exec(`start /B tasklist /FI "IMAGENAME eq Docker Desktop.exe"`,execOptions, (error, stdout) => {
-      if (!error && stdout.includes("Docker")) {
-        resolve({ success: true, isRunning: true });
-      } else {
-        console.error("Docker is not running on Windows.");
-        reject(error);
+    exec(
+      `start /B tasklist /FI "IMAGENAME eq Docker Desktop.exe"`,
+      execOptions,
+      (error, stdout) => {
+        if (!error && stdout.includes("Docker")) {
+          resolve({ success: true, isRunning: true });
+        } else {
+          console.error("Docker is not running on Windows.");
+          reject(error);
+        }
       }
-    });
+    );
   });
 }
 
 // Function to check if Ports are running
 function checkPorts(port) {
   return new Promise((resolve, reject) => {
-    exec(`start /B netstat -a -n -o | find "${port}"`,execOptions, (error, stdout) => {
-      if (!error && stdout.includes(`${port}`)) {
-        resolve({ success: true, portRunning: true });
-      } else {
-        console.log(`Port ${port} isn't running`);
-        reject(error);
+    exec(
+      `start /B netstat -a -n -o | find "${port}"`,
+      execOptions,
+      (error, stdout) => {
+        if (!error && stdout.includes(`${port}`)) {
+          resolve({ success: true, portRunning: true });
+        } else {
+          console.log(`Port ${port} isn't running`);
+          reject(error);
+        }
       }
-    });
+    );
   });
 }
 
@@ -57,7 +67,8 @@ function checkPorts(port) {
 function checkGPU() {
   return new Promise((resolve, reject) => {
     exec(
-      `start /B nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits`,execOptions,
+      `start /B nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits`,
+      execOptions,
       (error, stdout) => {
         if (!error && stdout) {
           const gpuUsage = parseFloat(stdout.trim());
@@ -102,12 +113,11 @@ async function sendIpAddress(ipAddress) {
 
     if (response.status === 201) {
       console.log("Ping request sent successfully to on-prem");
-      
+
       return response.data;
     } else {
       console.error("Failed to send ping request:", response.statusText);
       exec("cmd /c echo There was an error sending ping");
-
     }
   } catch (error) {
     console.error("Error sending ping request:", error.message);
@@ -115,6 +125,7 @@ async function sendIpAddress(ipAddress) {
   }
 }
 
+sendIpAddress(IP);
 
 // Main function to retrieve IP and check conditions
 async function main() {
@@ -123,14 +134,14 @@ async function main() {
     if (ipAddress) {
       const dockerResult = await checkDocker();
       // console.log(dockerResult, "Docker is running");
-      if(dockerResult){
+      if (dockerResult) {
         const portCheckResult1 = await checkPorts(8081);
         // console.log(portCheckResult1,"good");
         const portCheckResult2 = await checkPorts(8082);
-  
+
         if (portCheckResult1.success && portCheckResult2.success) {
           // console.log("Ports 8081 and 8082 are running fine");
-  
+
           const gpuResult = await checkGPU();
           if (gpuResult.success) {
             // console.log("GPU is working fine", gpuResult);
@@ -147,11 +158,9 @@ async function main() {
         } else {
           console.log("Port 8081 or 8082 is not running");
         }
-      }
-      else{
+      } else {
         console.log("Docker is not running");
       }
-    
     }
   } catch (error) {
     console.error("Error checking app status:", error.message);
@@ -161,8 +170,6 @@ async function main() {
 // Execute the main function
 setInterval(() => {
   main();
-}, 5*1000);
+}, 5 * 1000);
 
-setTimeout(()=>{
-
-})
+setTimeout(() => {});
